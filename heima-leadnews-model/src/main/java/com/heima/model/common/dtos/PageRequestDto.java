@@ -1,13 +1,15 @@
 package com.heima.model.common.dtos;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Data
 @Slf4j
 public class PageRequestDto {
-
+    @ApiModelProperty(value = "页面大小",required = true)
     protected Integer size;
+    @ApiModelProperty(value = "当前页",required = true)
     protected Integer page;
 
     public void checkParam() {
