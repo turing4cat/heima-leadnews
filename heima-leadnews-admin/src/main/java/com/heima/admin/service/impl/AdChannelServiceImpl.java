@@ -14,6 +14,8 @@ import com.heima.model.common.enums.AppHttpCodeEnum;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+
 @Service
 public class AdChannelServiceImpl extends ServiceImpl<AdChannelMapper, AdChannel> implements AdChannelService {
     /**
@@ -46,5 +48,47 @@ public class AdChannelServiceImpl extends ServiceImpl<AdChannelMapper, AdChannel
         //封装数据
         responseResult.setData(result.getRecords());
         return responseResult;
+    }
+
+    @Override
+    public ResponseResult insert(AdChannel channel) {
+        //判断数据
+        if (channel==null){
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //封装数据
+        channel.setCreatedTime(new Date());
+        //执行
+        save(channel);
+        return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
+    }
+
+    @Override
+    public ResponseResult update(AdChannel channel) {
+        //判断参数
+        if (null==channel || channel.getId()==null) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        updateById(channel);
+        return ResponseResult.setAppHttpCodeEnum(AppHttpCodeEnum.SUCCESS);
+    }
+
+    @Override
+    public ResponseResult deleteById(Integer id) {
+        //判断参数
+        if (id==null) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //判断是否存在
+        AdChannel channelDB = getById(id);
+        if (channelDB==null) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_EXIST);
+        }
+        //判断是否有效
+        if (channelDB.getStatus()) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.NO_OPERATOR_AUTH,"频道有效，不能删除");
+        }
+        removeById(id);
+        return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 }
