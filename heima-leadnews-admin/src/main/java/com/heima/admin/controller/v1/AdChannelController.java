@@ -1,13 +1,10 @@
 package com.heima.admin.controller.v1;
 
-import com.alibaba.fastjson.serializer.AdderSerializer;
 import com.heima.admin.service.AdChannelService;
 import com.heima.apis.admin.AdChannelControllerApi;
-import com.heima.common.exception.CostomException;
-import com.heima.model.admin.dtos.AdChannel;
+import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.admin.dtos.ChannelDto;
 import com.heima.model.common.dtos.ResponseResult;
-import com.heima.model.common.enums.AppHttpCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

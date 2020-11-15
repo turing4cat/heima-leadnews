@@ -1,12 +1,10 @@
 package com.heima.apis.admin;
 
-import com.heima.model.admin.dtos.AdChannel;
+import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.admin.dtos.ChannelDto;
 import com.heima.model.common.dtos.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
-import java.nio.channels.Channel;
 
 @Api(value = "频道管理",tags = "channel",description = "频道管理的API")
 public interface AdChannelControllerApi {

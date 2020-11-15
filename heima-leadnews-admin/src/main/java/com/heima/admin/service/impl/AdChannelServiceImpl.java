@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.heima.admin.mapper.AdChannelMapper;
 import com.heima.admin.service.AdChannelService;
-import com.heima.model.admin.dtos.AdChannel;
+import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.admin.dtos.ChannelDto;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
