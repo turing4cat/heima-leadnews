@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class AdChannelServiceImpl extends ServiceImpl<AdChannelMapper, AdChannel> implements AdChannelService {
@@ -69,6 +70,22 @@ public class AdChannelServiceImpl extends ServiceImpl<AdChannelMapper, AdChannel
         if (null==channel || channel.getId()==null) {
             return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
         }
+        //从数据库查询的数据
+        AdChannel byId = getById(channel.getId());
+        //判断是否更改名称
+        if (byId.getName().equals(channel.getName())){
+            updateById(channel);
+            return ResponseResult.setAppHttpCodeEnum(AppHttpCodeEnum.SUCCESS);
+        }
+        //更改的话判断用户名是否存在
+        LambdaQueryWrapper<AdChannel> adChannelLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        adChannelLambdaQueryWrapper.eq(AdChannel::getName,channel.getName());
+        AdChannel channel1 = getOne(adChannelLambdaQueryWrapper);
+
+        if (channel1!=null) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.NO_OPERATOR_AUTH,"用户名已经存在");
+        }
+        //不存在就修改数据
         updateById(channel);
         return ResponseResult.setAppHttpCodeEnum(AppHttpCodeEnum.SUCCESS);
     }
