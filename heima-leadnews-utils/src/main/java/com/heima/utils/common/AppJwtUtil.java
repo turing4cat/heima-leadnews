@@ -110,8 +110,9 @@ public class AppJwtUtil {
        /* Map map = new HashMap();
         map.put("id","11");*/
         System.out.println(AppJwtUtil.getToken(1102L));
-        Jws<Claims> jws = AppJwtUtil.getJws("eyJhbGciOiJIUzUxMiIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAC2L0QrDIAwA_yXPFXSaoP2bZE2Zg4IQCxtj_74U9nbHcR94zg4riLJUQQr3ylsoUfbASBowE8W9MBFXWKDzhDVRxFJbo7yAneK3vW3qcXUz14f2g9343Nx4DGd9jf_ZMl5n95ZSvH1_Xkvy4oMAAAA.TTzZCdXq2kKIVSe8HVSDrWIOLj3PK1BeLUZ_GTQ_zqqou9CUIxxFeeMoV4N3JlnPaAkytLz6CWLTXX2qlypSxg");
+        Jws<Claims> jws = AppJwtUtil.getJws("eyJhbGciOiJIUzUxMiIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAC2L0QqDMAwA_yXPFppos9W_SbRiB0IhFTbG_n0RfLvjuC-8eoUZxm2hlXUJG5UcJs45qKQUJoysT1YUKjBAlQ4zckwp8oNwADvVb_tYL8fVzVz3Ug9xk3N1k9acy7vdJ8bxOqs3xEi_P6BFN4GDAAAA.4jZRoppHe96OwAhu0pbgUwjF0OwlAabNHpVYL31egsCMkMrUVkZSGZj3YhBJCWQrMb4PRC6d80xSHDLqT4alGQ");
         Claims claims = jws.getBody();
+        System.out.println("claims = " + claims);
         System.out.println(claims.get("id"));
 
     }
