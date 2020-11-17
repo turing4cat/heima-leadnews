@@ -13,4 +13,11 @@ public interface ApUserRealnameService extends IService<ApUserRealname> {
      * @return
      */
     public ResponseResult loadListByStatus(AuthDto dto);
+    /**
+     * 根据状态进行审核
+     * @param dto
+     * @param status  2 审核失败   9 审核成功
+     * @return
+     */
+    ResponseResult updateStatusById(AuthDto dto, Short status);
 }

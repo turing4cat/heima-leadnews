@@ -1,6 +1,7 @@
 package com.heima.user.controller.v1;
 
 import com.heima.apis.user.ApUserRealnameControllerApi;
+import com.heima.common.constants.user.UserConstants.AdminConstants;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.user.dtos.AuthDto;
@@ -20,5 +21,15 @@ public class ApUserRealnameController implements ApUserRealnameControllerApi {
     @Override
     public ResponseResult loadListByStatus(@RequestBody AuthDto dto) {
         return userRealnameService.loadListByStatus(dto);
+    }
+    @PostMapping("/authPass")
+    @Override
+    public ResponseResult authPass(@RequestBody AuthDto dto) {
+        return userRealnameService.updateStatusById(dto, AdminConstants.PASS_AUTH);
+    }
+    @PostMapping("/authFail")
+    @Override
+    public ResponseResult authFail(@RequestBody AuthDto dto) {
+        return userRealnameService.updateStatusById(dto,AdminConstants.FAIL_AUTH);
     }
 }

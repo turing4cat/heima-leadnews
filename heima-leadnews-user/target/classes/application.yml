@@ -16,4 +16,4 @@ spring:
 mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml
   # 设置别名包扫描路径，通过该属性可以给包中的类注册别名
-  type-aliases-package: com.heima.model.user.pojos
+  type-aliases-package: com.heima.model.user.pojo
