@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.additional.query.impl.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.heima.common.constants.user.UserConstants.AdminConstants;
+import com.heima.common.exception.CostomException;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
@@ -21,13 +22,16 @@ import com.heima.user.mapper.ApUserMapper;
 import com.heima.user.mapper.ApUserRealnameMapper;
 import com.heima.user.service.ApUserRealnameService;
 import com.sun.xml.bind.v2.TODO;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 
 @Service
+@Transactional
 public class ApUserRealnameImpl extends ServiceImpl<ApUserRealnameMapper, ApUserRealname> implements ApUserRealnameService {
     @Autowired
     ArticleFeign articleFeign;
@@ -63,6 +67,7 @@ public class ApUserRealnameImpl extends ServiceImpl<ApUserRealnameMapper, ApUser
      * @param status  2 审核失败   9 审核成功
      * @return
      */
+    @GlobalTransactional
     @Override
     public ResponseResult updateStatusById(AuthDto dto, Short status) {
         //检查参数
@@ -82,6 +87,7 @@ public class ApUserRealnameImpl extends ServiceImpl<ApUserRealnameMapper, ApUser
         updateById(apUserRealname);
         //此处判断是否是审核通过 如果是 则创建自媒体人和作者
         if (status.equals(AdminConstants.PASS_AUTH)) {
+//            int i=1/0;
            ResponseResult responseResult= createWmUserAndAuthor(dto);
            if (responseResult!=null){
                return responseResult;
@@ -118,7 +124,12 @@ public class ApUserRealnameImpl extends ServiceImpl<ApUserRealnameMapper, ApUser
             wmUser.setCreatedTime(new Date());
             wmUser.setApUserId(apUser.getId());
             wmUser.setStatus((int)AdminConstants.PASS_AUTH);
-            wemediaFeign.save(wmUser);
+            ResponseResult save = wemediaFeign.save(wmUser);
+            //保存自媒体人
+            ResponseResult result = wemediaFeign.save(wmUser);
+            if(!result.getCode().equals(0)){
+                throw new CostomException(ResponseResult.errorResult(AppHttpCodeEnum.AUTH_FAIL));
+            }
         }
         //构建作者信息
         createApAuthor(wmUser);
@@ -135,7 +146,12 @@ public class ApUserRealnameImpl extends ServiceImpl<ApUserRealnameMapper, ApUser
             apAuthor.setUserId(wmUser.getApUserId());
             apAuthor.setType(2);
             apAuthor.setCreatedTime(new Date());
-            articleFeign.save(apAuthor);
+            ResponseResult save = articleFeign.save(apAuthor);
+            //保存作者
+            ResponseResult result = articleFeign.save(apAuthor);
+            if(!result.getCode().equals(0)){
+                throw new CostomException(ResponseResult.errorResult(AppHttpCodeEnum.AUTH_FAIL));
+            }
         }
     }
 }
