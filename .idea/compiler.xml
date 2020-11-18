@@ -16,10 +16,12 @@
         <module name="heima-leadnews-user" />
         <module name="heima-leadnews-admin-gateway" />
         <module name="heima-leadnews-article" />
+        <module name="heima-leadnews-wemedia-gateway" />
         <module name="heima-leadnews-seata" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="heima-leadnews-admin-com.heima.wemedia.gateway" target="1.8" />
       <module name="heima-leadnews-app-gateway" target="1.8" />
       <module name="heima-leadnews-behavior" target="1.8" />
       <module name="heima-leadnews-comment" target="1.8" />

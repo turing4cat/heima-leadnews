@@ -1,4 +1,4 @@
-package com.heima.user.config;
+package com.heima.article.config;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;

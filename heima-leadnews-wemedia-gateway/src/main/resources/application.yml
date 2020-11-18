@@ -1,8 +1,8 @@
 server:
-  port: 6001
+  port: 6002
 spring:
   application:
-    name: leadnews-admin-gateway
+    name: leadnews-wemedia-gateway
   cloud:
     nacos:
       discovery:
@@ -19,16 +19,9 @@ spring:
               - DELETE
       routes:
         # 平台管理
-        - id: admin
-          uri: lb://leadnews-admin
+        - id: wemedia
+          uri: lb://leadnews-wemedia
           predicates:
-            - Path=/admin/**
-          filters:
-            - StripPrefix= 1
-         # app用户
-        - id: user
-          uri: lb://leadnews-user
-          predicates:
-            - Path=/user/**
+            - Path=/wemedia/**
           filters:
             - StripPrefix= 1
