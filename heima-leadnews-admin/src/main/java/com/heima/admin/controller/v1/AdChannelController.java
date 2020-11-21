@@ -8,6 +8,8 @@ import com.heima.model.common.dtos.ResponseResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/channel")
 public class AdChannelController implements AdChannelControllerApi {
@@ -36,5 +38,17 @@ public class AdChannelController implements AdChannelControllerApi {
 //            throw new CostomException(ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"自定义异常"));
 //        }
         return adChannelService.deleteById(id);
+    }
+
+    /**
+     * 查询所有频道
+     *
+     * @return
+     */
+    @GetMapping("/channels")
+    @Override
+    public ResponseResult findAll() {
+        List<AdChannel> list = adChannelService.list();
+        return ResponseResult.okResult(list);
     }
 }
