@@ -6,7 +6,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
+        server-addr: 192.168.200.130:8848
     alibaba:
       seata:
         tx-service-group: ${spring.application.name}_tx_group
@@ -20,3 +20,6 @@ mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml
   # 设置别名包扫描路径，通过该属性可以给包中的类注册别名
   type-aliases-package: com.heima.model.article.pojos
+  global-config:
+    datacenter-id: 1
+      workerId: 1

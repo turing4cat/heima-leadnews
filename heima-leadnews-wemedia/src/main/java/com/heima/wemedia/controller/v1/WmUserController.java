@@ -29,4 +29,16 @@ public class WmUserController implements WmUserControllerApi {
     public WmUser findByName(@PathVariable("name") String name) {
         return wmUserService.getOne(Wrappers.<WmUser>lambdaQuery().eq(WmUser::getName, name));
     }
+
+    /**
+     * 根据id查询自媒体用户
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/findOne/{id}")
+    @Override
+    public WmUser findWmUserById(Long id) {
+        return wmUserService.getById(id);
+    }
 }

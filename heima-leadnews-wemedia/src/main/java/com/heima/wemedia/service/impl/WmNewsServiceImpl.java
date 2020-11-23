@@ -338,12 +338,41 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         }
         //判断是否已经上架 已经发布不能删除
 //        status==9表示发布  type==1表示上架
-        if (wmNews.getStatus().equals(WmNews.Status.PUBLISHED.getCode()) && wmNews.getType().equals(WemediaContants.WM_NEWS_ENABLE_UP)) {
+        if (wmNews.getStatus().equals(WmNews.Status.PUBLISHED.getCode()) && wmNews.getEnable().equals(WemediaContants.WM_NEWS_ENABLE_UP)) {
             return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_EXIST,"文章已发布，不能删除");
         }
         //删除关系
         wmNewsMaterialMapper.delete(Wrappers.<WmNewsMaterial>lambdaQuery().eq(WmNewsMaterial::getNewsId,wmNews.getId()));
         removeById(id);
+        return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
+    }
+
+    /**
+     * 上下架
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public ResponseResult downOrUp(WmNewsDto dto) {
+        //检查参数
+        if (dto==null || dto.getId()==null) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //判断文章是否存在
+        WmNews wmNews = getById(dto.getId());
+
+        if (wmNews==null) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"文章不存在");
+        }
+        //判断是否已经发布
+        if (wmNews.getStatus().equals(WmNews.Status.PUBLISHED.getCode())) {
+            //修改文章的状态  上架下架
+            wmNews.setEnable(dto.getEnable());
+            updateById(wmNews);
+        }
+
+        //结果返回
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 }

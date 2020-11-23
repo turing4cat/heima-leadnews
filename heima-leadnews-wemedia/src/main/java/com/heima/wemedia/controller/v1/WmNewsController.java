@@ -2,6 +2,7 @@ package com.heima.wemedia.controller.v1;
 
 import com.heima.apis.wemedia.WmNewsControllerApi;
 import com.heima.model.common.dtos.ResponseResult;
+import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.wemedia.dtos.WmNewsDto;
 import com.heima.model.wemedia.dtos.WmNewsPageReqDto;
 import com.heima.model.wemedia.pojos.WmNews;
@@ -65,5 +66,42 @@ public class WmNewsController implements WmNewsControllerApi {
     @Override
     public ResponseResult delNews(@PathVariable("id") Integer id) {
         return wmNewsService.delNews(id);
+    }
+
+    /**
+     * 上下架
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/down_or_up")
+    @Override
+    public ResponseResult downOrUp(@RequestBody WmNewsDto dto) {
+        return wmNewsService.downOrUp(dto);
+    }
+
+    /**
+     * 根据id查询文章
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/findOne/{id}")
+    @Override
+    public WmNews findById(@PathVariable("id") Integer id) {
+        return wmNewsService.getById(id);
+    }
+
+    /**
+     * 修改文章
+     *
+     * @param wmNews
+     * @return
+     */
+    @PostMapping("/update")
+    @Override
+    public ResponseResult updateWmNews(WmNews wmNews) {
+        wmNewsService.updateById(wmNews);
+        return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 }
