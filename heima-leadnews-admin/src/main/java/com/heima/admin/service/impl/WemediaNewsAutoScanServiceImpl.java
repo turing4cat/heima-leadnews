@@ -2,17 +2,24 @@ package com.heima.admin.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.heima.admin.feign.ArticleFeign;
 import com.heima.admin.feign.WemediaFeign;
+import com.heima.admin.mapper.AdChannelMapper;
+import com.heima.admin.service.AdChannelService;
 import com.heima.admin.service.AdSensitiveService;
 import com.heima.admin.service.WemediaNewsAutoScanService;
 import com.heima.common.aliyun.GreenImageScan;
 import com.heima.common.aliyun.GreenTextScan;
 import com.heima.common.fastdfs.FastDFSClient;
+import com.heima.model.admin.pojo.AdChannel;
 import com.heima.model.admin.pojo.AdSensitive;
+import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.wemedia.pojos.WmNews;
+import com.heima.model.wemedia.pojos.WmUser;
 import com.heima.utils.common.SensitiveWordUtil;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,6 +39,7 @@ public class WemediaNewsAutoScanServiceImpl implements WemediaNewsAutoScanServic
      *
      * @param id
      */
+    @GlobalTransactional
     @Override
     public void autoScanByMediaNewsId(Integer id) {
         //新增文章的时候调用该逻辑
@@ -63,7 +71,7 @@ public class WemediaNewsAutoScanServiceImpl implements WemediaNewsAutoScanServic
                 return;
             }
            boolean isImageScan= handleImageScan((List<String>) contentAndImagesResult.get("image"),wmNews);
-            if (isImageScan) {
+            if (!isImageScan) {
                 return;
             }
             //本地敏感词管理的审核
@@ -76,6 +84,7 @@ public class WemediaNewsAutoScanServiceImpl implements WemediaNewsAutoScanServic
                 updateWmNews(wmNews,(short)8,"审核通过，待发bu");
             }
             //走到这里代表审核通过  保存数据到app端
+            //修改文章的审核状态的操作   写在了保存app文章中
 //            updateWmNews(wmNews,(short)9,"审核通过，待发bu");
             saveAppArticle(wmNews);
         }
@@ -119,7 +128,7 @@ public class WemediaNewsAutoScanServiceImpl implements WemediaNewsAutoScanServic
      */
     private boolean handleImageScan(List<String> images, WmNews wmNews) {
         boolean flag=true;
-        if (images==null ||images.size()==0) {
+        if (images==null ||images.size()==1) {
             return true;
         }
         //获取图片地址  下载图片   校验图片
@@ -195,7 +204,7 @@ public class WemediaNewsAutoScanServiceImpl implements WemediaNewsAutoScanServic
         wmNews.setStatus(status);
         wmNews.setReason(msg);
         ResponseResult responseResult = wemediaFeign.updateWmNews(wmNews);
-        if (responseResult.getCode().equals(0)) {
+        if (!responseResult.getCode().equals(0)) {
             throw new RuntimeException("修改自媒体文章失败");
         }
     }
@@ -243,6 +252,46 @@ public class WemediaNewsAutoScanServiceImpl implements WemediaNewsAutoScanServic
      * @param wmNews
      */
     private void saveAppArticle(WmNews wmNews) {
-
+        //保存文章的操作
+        ResponseResult responseResult=saveArticle(wmNews);
+        if (!responseResult.getCode().equals(0)) {
+            throw new RuntimeException("新增文章保存失败");
+        }
+        //返回文章的id存储到自媒体文章中
+        Object data = responseResult.getData();
+        wmNews.setArticleId((Long) data);
+        //修改文章的状态
+        updateWmNews(wmNews,(short)9,"文章审核通过");
+    }
+    @Autowired
+    ArticleFeign articleFeign;
+    @Autowired
+    AdChannelService adChannelService;
+    /**
+     * 执行保存文章的调用
+     * @param wmNews
+     * @return
+     */
+    private ResponseResult saveArticle(WmNews wmNews) {
+        ArticleDto articleDto = new ArticleDto();
+        //此处的id作为识别保存或者修改的操作
+        if (wmNews.getArticleId()!=null) {
+            articleDto.setId(wmNews.getArticleId());
+        }
+        articleDto.setPublishTime(wmNews.getPublishTime());
+        articleDto.setTitle(wmNews.getTitle());
+        articleDto.setImages(wmNews.getImages());
+        articleDto.setLayout(wmNews.getType());
+        articleDto.setContent(wmNews.getContent());
+        articleDto.setCreatedTime(new Date());
+        //设置频道
+        AdChannel channel = adChannelService.getById(wmNews.getChannelId());
+        //数据封装
+        articleDto.setChannelId(channel.getId());
+        articleDto.setChannelName(channel.getName());
+        //设置作者信息
+        WmUser wmUser = wemediaFeign.findWmUserById(wmNews.getUserId());
+        articleDto.setAuthorName(wmUser.getName());
+        return  articleFeign.saveArticle(articleDto);
     }
 }

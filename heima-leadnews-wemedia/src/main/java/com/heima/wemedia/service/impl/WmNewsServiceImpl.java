@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.heima.common.constants.NewsAutoScanConstants;
 import com.heima.common.constants.WemediaContants.WemediaContants;
 import com.heima.common.exception.CostomException;
 import com.heima.model.common.dtos.PageResponseResult;
@@ -26,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,7 +93,8 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         //封装返回
         return responseResult;
     }
-
+    @Autowired
+    KafkaTemplate kafkaTemplate;
     /**
      * 自媒体文章发布
      *
@@ -286,14 +289,20 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         wmNews.setCreatedTime(new Date());
         //该字段表示上架下架
         wmNews.setEnable((short) 1);
+
+        boolean flag = false;
         //在此处判断是修改还是新发表的数据
         if (wmNews.getId() == null) {
-            save(wmNews);
+            flag=save(wmNews);
         } else {
             //修改  修改的时候先删除关系
             wmNewsMaterialMapper.delete(Wrappers.<WmNewsMaterial>lambdaQuery().eq(WmNewsMaterial::getNewsId, wmNews.getId()));
             //修改文章内容
-            updateById(wmNews);
+            flag=updateById(wmNews);
+        }
+        if (flag){
+            kafkaTemplate.send(NewsAutoScanConstants.WM_NEWS_AUTO_SCAN_TOPIC,JSON.toJSONString(wmNews.getId()));
+            System.out.println("发送消息完成======>"+wmNews.getId());
         }
     }
 

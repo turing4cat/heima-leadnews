@@ -22,4 +22,4 @@ mybatis-plus:
   type-aliases-package: com.heima.model.article.pojos
   global-config:
     datacenter-id: 1
-      workerId: 1
+    workerId: 1

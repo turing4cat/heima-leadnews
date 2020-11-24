@@ -15,6 +15,6 @@ public class WemediaNewsAutoScanTest {
     WemediaNewsAutoScanService wemediaNewsAutoScanService;
     @Test
     public void test(){
-        wemediaNewsAutoScanService.autoScanByMediaNewsId(6224);
+        wemediaNewsAutoScanService.autoScanByMediaNewsId(6251);
     }
 }
