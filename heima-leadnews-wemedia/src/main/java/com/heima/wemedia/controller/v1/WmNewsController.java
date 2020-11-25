@@ -1,6 +1,8 @@
 package com.heima.wemedia.controller.v1;
 
 import com.heima.apis.wemedia.WmNewsControllerApi;
+import com.heima.common.constants.WemediaContants.WemediaContants;
+import com.heima.model.article.dtos.NewsAuthDto;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.wemedia.dtos.WmNewsDto;
@@ -9,6 +11,8 @@ import com.heima.model.wemedia.pojos.WmNews;
 import com.heima.wemedia.service.WmNewsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/news")
@@ -103,5 +107,64 @@ public class WmNewsController implements WmNewsControllerApi {
     public ResponseResult updateWmNews(@RequestBody WmNews wmNews) {
         wmNewsService.updateById(wmNews);
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
+    }
+
+    /**
+     * 查询需要发布的文章id列表
+     *
+     * @return
+     */
+    @GetMapping("/findRelease")
+    @Override
+    public List<Integer> findRelease() {
+        return wmNewsService.findRelease();
+    }
+
+    /**
+     * 查询文章列表
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/list_vo")
+    @Override
+    public ResponseResult findList(@RequestBody NewsAuthDto dto) {
+        return wmNewsService.findList(dto);
+    }
+
+    /**
+     * 查询文章详情
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/one_vo/{id}")
+    @Override
+    public ResponseResult findWmNewsVo(@PathVariable("id") Integer id) {
+        return wmNewsService.findWmNewsVo(id);
+    }
+
+    /**
+     * 文章审核成功
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/auth_pass")
+    @Override
+    public ResponseResult authPass(@RequestBody NewsAuthDto dto) {
+        return wmNewsService.updateStatus(WemediaContants.WM_NEWS_AUTH_PASS,dto);
+    }
+
+    /**
+     * 文章审核失败
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/auth_fail")
+    @Override
+    public ResponseResult authFail(@RequestBody NewsAuthDto dto) {
+        return wmNewsService.updateStatus(WemediaContants.WM_NEWS_AUTH_FAIL,dto);
     }
 }

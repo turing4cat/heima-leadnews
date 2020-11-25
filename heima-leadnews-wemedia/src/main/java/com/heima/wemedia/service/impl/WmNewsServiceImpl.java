@@ -8,7 +8,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.heima.common.constants.NewsAutoScanConstants;
 import com.heima.common.constants.WemediaContants.WemediaContants;
+import com.heima.common.constants.message.WmNewsMessageConstants;
 import com.heima.common.exception.CostomException;
+import com.heima.model.article.dtos.NewsAuthDto;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
@@ -18,10 +20,12 @@ import com.heima.model.wemedia.pojos.WmMaterial;
 import com.heima.model.wemedia.pojos.WmNews;
 import com.heima.model.wemedia.pojos.WmNewsMaterial;
 import com.heima.model.wemedia.pojos.WmUser;
+import com.heima.model.wemedia.vos.WmNewsVo;
 import com.heima.utils.threadlocal.WmThreadLocalUtils;
 import com.heima.wemedia.mapper.WmMaterialMapper;
 import com.heima.wemedia.mapper.WmNewsMapper;
 import com.heima.wemedia.mapper.WmNewsMaterialMapper;
+import com.heima.wemedia.mapper.WmUserMapper;
 import com.heima.wemedia.service.WmNewsService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -374,14 +378,130 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         if (wmNews==null) {
             return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"文章不存在");
         }
-        //判断是否已经发布
-        if (wmNews.getStatus().equals(WmNews.Status.PUBLISHED.getCode())) {
+        //3.判断文章是否发布
+        if(!wmNews.getStatus().equals(WmNews.Status.PUBLISHED.getCode())){
+            return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_EXIST,"当前文章不是发布状态，不能上下架");
+        }
+        //状态是0 或者1 0 待发bu 1 上架
+        if (dto.getEnable()!=null&&dto.getEnable()>-1&&dto.getEnable()<2) {
             //修改文章的状态  上架下架
+            if (wmNews.getArticleId()!=null) {
+                //封装作者id 和文章的状态
+                HashMap<String, Object> msgMap = new HashMap<>();
+                msgMap.put("enable",dto.getEnable());
+                msgMap.put("articleId",wmNews.getArticleId());
+                kafkaTemplate.send(WmNewsMessageConstants.WM_NEWS_UP_OR_DOWN_TOPIC,JSON.toJSONString(msgMap));
+            }
+
             wmNews.setEnable(dto.getEnable());
             updateById(wmNews);
         }
-
         //结果返回
+        return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
+    }
+
+    /**
+     * 查询需要发布的文章id列表
+     *
+     * @return
+     */
+    @Override
+    public List<Integer> findRelease() {
+        //查询状态为4或为8的数据且发布时间小于当前时间
+        List<WmNews> list = list(Wrappers.<WmNews>lambdaQuery().le(WmNews::getPublishTime,new Date()).in(WmNews::getStatus, 4, 8).select(WmNews::getId));
+        List<Integer> collect = list.stream().map(WmNews::getId).collect(Collectors.toList());
+        return collect;
+    }
+    @Autowired
+    WmNewsMapper wmNewsMapper;
+    @Autowired
+    WmUserMapper wmUserMapper;
+    /**
+     * 查询文章列表
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public ResponseResult findList(NewsAuthDto dto) {
+        //参数判断
+        if (dto==null) {
+            ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //参数初始化
+        dto.checkParam();
+        //参数构造
+        //记录当前页
+        int currentPage = dto.getPage();
+
+        dto.setPage((dto.getPage()-1)*dto.getSize());
+        if (StringUtils.isNoneBlank(dto.getTitle())) {
+            dto.setTitle("%"+dto.getTitle()+"%");
+        }
+        //查询
+        List<WmNewsVo> listAndPage = wmNewsMapper.findListAndPage(dto);
+        int listCount = wmNewsMapper.findListCount(dto);
+        //结果封装
+        ResponseResult responseResult = new PageResponseResult(currentPage,dto.getSize(),listCount);
+        responseResult.setData(listAndPage);
+        responseResult.setHost(fileServerUrl);
+        return responseResult;
+    }
+
+    /**
+     * 查询文章详情
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public ResponseResult findWmNewsVo(Integer id) {
+        //检查数据
+        if (id==null) {
+            ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //查询数据
+        WmNews wm = getById(id);
+        //查询作者
+        WmUser wmUser=null;
+        if (wm.getUserId()!=null) {
+             wmUser = wmUserMapper.selectById(wm.getUserId());
+        }
+        //封装数据
+        WmNewsVo wmNewsVo = new WmNewsVo();
+        BeanUtils.copyProperties(wm,wmNewsVo);
+        wmNewsVo.setAuthorName(wmUser.getName());
+        //返回数据
+        ResponseResult responseResult = ResponseResult.okResult(wmNewsVo);
+        responseResult.setHost(fileServerUrl);
+        return responseResult;
+    }
+
+    /**
+     * 自媒体文章人工审核
+     *
+     * @param status 2  审核失败  4 审核成功
+     * @param dto
+     * @return
+     */
+    @Override
+    public ResponseResult updateStatus(Short status, NewsAuthDto dto) {
+        //1.参数检查
+        if(dto == null || dto.getId() == null){
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //查询数据
+        WmNews wm = getById(dto.getId());
+        if(wm == null){
+            return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_EXIST);
+        }
+        //修改状态
+        wm.setStatus(status);
+        if(StringUtils.isNotBlank(dto.getMsg())){
+            wm.setReason(dto.getMsg());
+        }
+        //更新数据
+        updateById(wm);
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 }

@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 @FeignClient("leadnews-wemedia")
 public interface WemediaFeign {
 
@@ -20,4 +22,6 @@ public interface WemediaFeign {
 
     @GetMapping("/api/v1/user/findOne/{id}")
     WmUser findWmUserById(@PathVariable("id") Integer id);
+    @GetMapping("/api/v1/news/findRelease")
+    public List<Integer> findRelease();
 }

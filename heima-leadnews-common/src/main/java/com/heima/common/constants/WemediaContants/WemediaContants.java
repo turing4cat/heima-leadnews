@@ -16,4 +16,7 @@ public class WemediaContants {
     public static final Short WM_CONTENT_REFERENCE = 0;
     public static final Short WM_COVER_REFERENCE = 1;
     public static final Short WM_NEWS_ENABLE_UP = 1;
+    //文章的人工状态审核  驳回 通过
+    public static final Short WM_NEWS_AUTH_PASS = 4;
+    public static final Short WM_NEWS_AUTH_FAIL = 2;
 }
