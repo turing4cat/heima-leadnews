@@ -16,7 +16,7 @@ public class UserRelationDto {
     /**
      * 操作方式
      * 0  关注
-     * 1  取消
+     * * 1  取消
      */
     Short operation;
 }
