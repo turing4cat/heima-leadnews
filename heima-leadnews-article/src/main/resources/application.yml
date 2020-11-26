@@ -29,4 +29,4 @@ mybatis-plus:
   global-config:
     datacenter-id: 1
     workerId: 1
-
+fdfs.url: http://192.168.200.130/

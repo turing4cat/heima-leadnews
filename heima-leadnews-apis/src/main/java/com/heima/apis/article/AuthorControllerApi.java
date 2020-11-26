@@ -20,4 +20,10 @@ public interface AuthorControllerApi {
      * @return
      */
     public ResponseResult save(@RequestBody ApAuthor apAuthor);
+    /**
+     * 根据Id查询作者
+     * @param id
+     * @return
+     */
+    public ApAuthor findById(@PathVariable("id") Integer id);
 }

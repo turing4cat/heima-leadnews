@@ -28,4 +28,16 @@ public class AuthorController implements AuthorControllerApi {
         authorService.save(apAuthor);
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
+
+    /**
+     * 根据Id查询作者
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/one/{id}")
+    @Override
+    public ApAuthor findById(@PathVariable("id") Integer id) {
+        return authorService.getById(id);
+    }
 }
