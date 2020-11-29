@@ -22,6 +22,7 @@
         <module>heima-leadnews-wemedia-gateway</module>
         <module>heima-leadnews-app-gateway</module>
         <module>heima-leadnews-behavior</module>
+        <module>heima-leadnews-comment</module>
     </modules>
 
     <!-- 继承Spring boot工程 -->
