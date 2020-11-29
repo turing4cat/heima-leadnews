@@ -1,7 +1,10 @@
 package com.heima.user.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.heima.common.message.FollowBehaviorConstants;
 import com.heima.model.article.pojos.ApAuthor;
+import com.heima.model.behavior.dtos.FollowBehaviorDto;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.user.dtos.UserRelationDto;
@@ -14,6 +17,7 @@ import com.heima.user.mapper.ApUserFollowMapper;
 import com.heima.user.service.ApUserRelationService;
 import com.heima.utils.threadlocal.AppThreadLocalUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +32,8 @@ public class ApUserRelationServiceImpl implements ApUserRelationService {
     ApUserFollowMapper apUserFollowMapper;
     @Autowired
     ApUserFanMapper apUserFanMapper;
+    @Autowired
+    KafkaTemplate kafkaTemplate;
     /**
      * 关注或取消关注
      *
@@ -117,6 +123,12 @@ public class ApUserRelationServiceImpl implements ApUserRelationService {
         apUserFan.setUserId(dto.getAuthorId());
         apUserFan.setLevel((short)1);
         apUserFanMapper.insert(apUserFan);
+        //构建关系的时候远程调用  需要记录用户的行为
+        FollowBehaviorDto followBehaviorDto = new FollowBehaviorDto();
+        followBehaviorDto.setArticleId(dto.getArticleId());
+        followBehaviorDto.setFollowId(apAuthorDB.getUserId());
+        followBehaviorDto.setUserId(user.getId());
+        kafkaTemplate.send(FollowBehaviorConstants.FOLLOW_BEHAVIOR_TOPIC, JSON.toJSONString(followBehaviorDto));
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 }

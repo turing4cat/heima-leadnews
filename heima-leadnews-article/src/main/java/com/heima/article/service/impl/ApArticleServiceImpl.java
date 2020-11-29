@@ -2,11 +2,14 @@ package com.heima.article.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.heima.article.feign.ApBehaviorClient;
+import com.heima.article.feign.UserFeign;
 import com.heima.article.mapper.ApArticleConfigMapper;
 import com.heima.article.mapper.ApArticleContentMapper;
 import com.heima.article.mapper.ApArticleMapper;
 import com.heima.article.mapper.AuthorMapper;
 import com.heima.article.service.ApArticleService;
+import com.heima.article.service.ApCollectionService;
 import com.heima.common.constants.article.ArticleConstants;
 import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.article.dtos.ArticleHomeDto;
@@ -15,8 +18,15 @@ import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApArticleConfig;
 import com.heima.model.article.pojos.ApArticleContent;
 import com.heima.model.article.pojos.ApAuthor;
+import com.heima.model.behavior.pojos.ApBehaviorEntry;
+import com.heima.model.behavior.pojos.ApCollection;
+import com.heima.model.behavior.pojos.ApLikesBehavior;
+import com.heima.model.behavior.pojos.ApUnlikesBehavior;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
+import com.heima.model.user.pojo.ApUser;
+import com.heima.model.user.pojo.ApUserFollow;
+import com.heima.utils.threadlocal.AppThreadLocalUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -151,6 +161,63 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
         //数据返回封装
         map.put("content",apArticleContent);
         map.put("config",apArticleConfig);
+        return ResponseResult.okResult(map);
+    }
+    //远程调用的注入
+    @Autowired
+    ApBehaviorClient apBehaviorClient;
+    @Autowired
+    UserFeign userFeign;
+    @Autowired
+    ApCollectionService apCollectionService;
+    /**
+     * 加载文章详情的行为内容
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public ResponseResult loadArticleBehavior(ArticleInfoDto dto) {
+        //参数检查
+        if(dto == null || dto.getArticleId() == null || dto.getAuthorId() == null){
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //获取当前登录的用户
+        ApUser user = AppThreadLocalUtils.getUser();
+
+        //查询当前实体
+        ApBehaviorEntry behaviorEntry = apBehaviorClient.findByUserIdOrEquipmentId(user.getId(), dto.getEquipmentId());
+        if (behaviorEntry==null) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+        //前端的结果
+        //{"isfollow":true,"islike":true,"isunlike":false,"iscollection":true}
+        boolean isfollow=false,islike=false,isunlike=false,iscollection=false;
+        //查询我的关注
+        ApUserFollow apUserFollow = userFeign.findByUserIdAndFollowId(user.getId(), dto.getAuthorId());
+        if (apUserFollow!=null){
+            isfollow=true;
+        }
+        // 我的喜欢
+        ApLikesBehavior apLikesBehavior = apBehaviorClient.findLikeByArticleIdAndEntryId(dto.getArticleId(),behaviorEntry.getId());
+        if (apLikesBehavior!=null&& apLikesBehavior.getOperation().equals(ApLikesBehavior.Operation.LIKE.getCode())){
+            islike=true;
+        }
+        //我的不喜欢
+        ApUnlikesBehavior apUnlikesBehavior = apBehaviorClient.findUnLikeByArticleIdAndEntryId(behaviorEntry.getId(), dto.getArticleId());
+        if (apUnlikesBehavior!=null&& apUnlikesBehavior.getType().equals(ApUnlikesBehavior.Type.UNLIKE.getCode())) {
+            isunlike=true;
+        }
+        //我的收藏
+        ApCollection apCollection = apCollectionService.getOne(Wrappers.<ApCollection>lambdaQuery().eq(ApCollection::getArticleId, dto.getArticleId()).eq(ApCollection::getEntryId, behaviorEntry.getId()));
+        if (apCollection!=null) {
+            iscollection=true;
+        }
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("isfollow",isfollow);
+        map.put("islike",islike);
+        map.put("isunlike",isunlike);
+        map.put("iscollection",iscollection);
         return ResponseResult.okResult(map);
     }
 }

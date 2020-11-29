@@ -11,4 +11,10 @@ public interface ArticleInfoControllerApi {
      * @return
      */
     public ResponseResult loadArticleInfo(ArticleInfoDto dto);
+    /**
+     * 加载文章详情的行为内容
+     * @param dto
+     * @return
+     */
+    ResponseResult loadArticleBehavior( ArticleInfoDto dto);
 }
